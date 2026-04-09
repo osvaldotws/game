@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zombie Outpost - Idle Survival Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #e94560;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #e94560;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            text-shadow: 0 0 10px #e94560;
+            margin-bottom: 10px;
+        }
+
+        .level-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(233, 69, 96, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #e94560;
+        }
+
+        .level-display {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            width: 300px;
+            height: 25px;
+            background: #333;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #e94560;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e94560, #ff6b6b);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .resources {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .resource-card {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #e94560;
+            transition: transform 0.2s;
+        }
+
+        .resource-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .resource-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .resource-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .main-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .main-area {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #e94560;
+        }
+
+        .panel h2 {
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            border-bottom: 1px solid #e94560;
+            padding-bottom: 10px;
+        }
+
+        .clicker-btn {
+            width: 100%;
+            padding: 30px;
+            font-size: 1.5em;
+            background: linear-gradient(145deg, #e94560, #c73e54);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.1s;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(233, 69, 96, 0.4);
+        }
+
+        .clicker-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 8px rgba(233, 69, 96, 0.4);
+        }
+
+        .clicker-btn:hover {
+            background: linear-gradient(145deg, #ff6b6b, #e94560);
+        }
+
+        .upgrade-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: rgba(233, 69, 96, 0.1);
+            border-radius: 6px;
+            border: 1px solid rgba(233, 69, 96, 0.3);
+        }
+
+        .upgrade-info {
+            flex: 1;
+        }
+
+        .upgrade-name {
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .upgrade-desc {
+            font-size: 0.8em;
+            opacity: 0.7;
+            margin-top: 3px;
+        }
+
+        .upgrade-cost {
+            font-weight: bold;
+            color: #ffd700;
+            margin-right: 10px;
+        }
+
+        .upgrade-btn {
+            padding: 8px 15px;
+            background: #e94560;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.2s;
+        }
+
+        .upgrade-btn:hover:not(:disabled) {
+            background: #ff6b6b;
+            transform: scale(1.05);
+        }
+
+        .upgrade-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .workers-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .worker-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: rgba(233, 69, 96, 0.1);
+            border-radius: 6px;
+            border-left: 3px solid #e94560;
+        }
+
+        .worker-info {
+            flex: 1;
+        }
+
+        .worker-name {
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .worker-count {
+            color: #ffd700;
+            font-size: 0.9em;
+        }
+
+        .worker-production {
+            font-size: 0.8em;
+            opacity: 0.7;
+        }
+
+        .stats-panel {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #e94560;
+            margin-bottom: 20px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(233, 69, 96, 0.3);
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: #e94560;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            animation: slideIn 0.3s ease;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .level-complete {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            border: 3px solid #e94560;
+            text-align: center;
+            z-index: 1001;
+            display: none;
+        }
+
+        .level-complete h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            color: #ffd700;
+        }
+
+        .next-level-btn {
+            padding: 15px 40px;
+            font-size: 1.2em;
+            background: linear-gradient(145deg, #e94560, #c73e54);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            margin-top: 20px;
+        }
+
+        .next-level-btn:hover {
+            background: linear-gradient(145deg, #ff6b6b, #e94560);
+        }
+
+        .game-complete {
+            display: none;
+        }
+
+        .floating-text {
+            position: absolute;
+            color: #ffd700;
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 1s ease forwards;
+        }
+
+        @keyframes floatUp {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #e94560;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧟 ZOMBIE OUTPOST 🧟</h1>
+            <p>Sobrevive al apocalipsis zombie - 50 Niveles Extremos</p>
+        </header>
+
+        <div class="level-info">
+            <div class="level-display">Nivel <span id="currentLevel">1</span>/50</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="levelProgress"></div>
+            </div>
+            <div>Meta: <span id="levelGoal">100</span> supervivientes</div>
+        </div>
+
+        <div class="resources">
+            <div class="resource-card">
+                <div class="resource-value" id="survivors">0</div>
+                <div class="resource-label">👥 Supervivientes</div>
+            </div>
+            <div class="resource-card">
+                <div class="resource-value" id="food">0</div>
+                <div class="resource-label">🍖 Comida</div>
+            </div>
+            <div class="resource-card">
+                <div class="resource-value" id="supplies">0</div>
+                <div class="resource-label">📦 Suministros</div>
+            </div>
+            <div class="resource-card">
+                <div class="resource-value" id="weapons">0</div>
+                <div class="resource-label">🔫 Armas</div>
+            </div>
+        </div>
+
+        <div class="main-area">
+            <div class="panel">
+                <h2>⚡ Acciones</h2>
+                <button class="clicker-btn" id="scavengeBtn" onclick="scavenge()">
+                    🔍 BUSCAR RECURSOS
+                </button>
+                <div style="margin-top: 20px; text-align: center;">
+                    <p style="margin-bottom: 10px;">Producción por segundo:</p>
+                    <div id="productionRates"></div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>📊 Estadísticas</h2>
+                <div class="stats-panel" style="border: none; padding: 0;">
+                    <div class="stat-row">
+                        <span>Total Clicks:</span>
+                        <span id="totalClicks">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Tiempo Jugado:</span>
+                        <span id="timePlayed">0:00</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Niveles Completados:</span>
+                        <span id="levelsCompleted">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Supervivientes Totales:</span>
+                        <span id="totalSurvivors">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-area">
+            <div class="panel">
+                <h2>⬆️ Mejoras Activas</h2>
+                <div id="upgradesList"></div>
+            </div>
+
+            <div class="panel">
+                <h2>👷 Reclutar Trabajadores</h2>
+                <div class="workers-list" id="workersList"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="level-complete" id="levelCompleteModal">
+        <h2>🎉 ¡NIVEL COMPLETADO! 🎉</h2>
+        <p>Has rescatado a todos los supervivientes del nivel <span id="completedLevel">1</span></p>
+        <p style="margin-top: 15px;">Prepárate para el siguiente desafío...</p>
+        <button class="next-level-btn" onclick="nextLevel()">SIGUIENTE NIVEL</button>
+    </div>
+
+    <div class="level-complete game-complete" id="gameCompleteModal">
+        <h2>🏆 ¡JUEGO COMPLETADO! 🏆</h2>
+        <p>¡Felicidades! Has completado los 50 niveles</p>
+        <p style="margin-top: 15px;">Eres el comandante supremo del apocalipsis zombie</p>
+        <p id="finalStats" style="margin-top: 20px; font-size: 0.9em;"></p>
+    </div>
+
+    <script>
+        // Game State
+        let gameState = {
+            level: 1,
+            survivors: 0,
+            food: 0,
+            supplies: 0,
+            weapons: 0,
+            totalClicks: 0,
+            startTime: Date.now(),
+            levelsCompleted: 0,
+            totalSurvivorsRescued: 0,
+            upgrades: {},
+            workers: {}
+        };
+
+        // Level configurations (50 increasingly difficult levels)
+        const levelConfigs = [];
+        for (let i = 1; i <= 50; i++) {
+            let baseGoal = 100;
+            let multiplier = Math.pow(1.15, i - 1);
+            if (i > 25) multiplier = Math.pow(1.2, i - 1);
+            if (i > 40) multiplier = Math.pow(1.25, i - 1);
+            
+            levelConfigs.push({
+                level: i,
+                goal: Math.floor(baseGoal * multiplier),
+                zombieAttackChance: Math.min(0.05 + (i * 0.003), 0.2),
+                resourceDecay: Math.max(0, (i - 10) * 0.001)
+            });
+        }
+
+        // Upgrades configuration
+        const upgradesConfig = [
+            {
+                id: 'better_tools',
+                name: 'Mejores Herramientas',
+                description: '+1 recurso por click',
+                baseCost: 50,
+                costMultiplier: 1.8,
+                effect: () => { return 1 + (gameState.upgrades['better_tools'] || 0); }
+            },
+            {
+                id: 'scout_team',
+                name: 'Equipo de Exploración',
+                description: '+50% recursos por click',
+                baseCost: 150,
+                costMultiplier: 2,
+                effect: () => { return 1.5 + ((gameState.upgrades['scout_team'] || 0) * 0.1); }
+            },
+            {
+                id: 'efficient_workers',
+                name: 'Trabajadores Eficientes',
+                description: '+25% producción automática',
+                baseCost: 300,
+                costMultiplier: 1.9,
+                effect: () => { return 1.25 + ((gameState.upgrades['efficient_workers'] || 0) * 0.05); }
+            },
+            {
+                id: 'advanced_scavenging',
+                name: 'Búsqueda Avanzada',
+                description: 'Clicks dan recursos extra',
+                baseCost: 500,
+                costMultiplier: 2.2,
+                effect: () => { return 2 + (gameState.upgrades['advanced_scavenging'] || 0); }
+            },
+            {
+                id: 'master_trainer',
+                name: 'Entrenador Maestro',
+                description: '+100% toda producción',
+                baseCost: 1000,
+                costMultiplier: 2.5,
+                effect: () => { return 2 + ((gameState.upgrades['master_trainer'] || 0) * 0.2); }
+            }
+        ];
+
+        // Workers configuration
+        const workersConfig = [
+            {
+                id: 'scavenger',
+                name: 'Recolector',
+                description: 'Produce comida automáticamente',
+                baseCost: 25,
+                costMultiplier: 1.3,
+                production: { food: 1 },
+                interval: 1000
+            },
+            {
+                id: 'supplier',
+                name: 'Proveedor',
+                description: 'Consigue suministros',
+                baseCost: 50,
+                costMultiplier: 1.35,
+                production: { supplies: 1 },
+                interval: 1500
+            },
+            {
+                id: 'hunter',
+                name: 'Cazador',
+                description: 'Obtiene comida y armas',
+                baseCost: 100,
+                costMultiplier: 1.4,
+                production: { food: 2, weapons: 1 },
+                interval: 2000
+            },
+            {
+                id: 'engineer',
+                name: 'Ingeniero',
+                description: 'Produce suministros y armas',
+                baseCost: 200,
+                costMultiplier: 1.45,
+                production: { supplies: 2, weapons: 1 },
+                interval: 2500
+            },
+            {
+                id: 'rescue_team',
+                name: 'Equipo de Rescate',
+                description: 'Rescata supervivientes automáticamente',
+                baseCost: 500,
+                costMultiplier: 1.5,
+                production: { survivors: 1 },
+                interval: 3000
+            },
+            {
+                id: 'elite_squad',
+                name: 'Escuadrón Élite',
+                description: 'Producción masiva de todo',
+                baseCost: 1000,
+                costMultiplier: 1.6,
+                production: { food: 5, supplies: 5, weapons: 3, survivors: 2 },
+                interval: 4000
+            }
+        ];
+
+        // Initialize workers
+        workersConfig.forEach(w => {
+            gameState.workers[w.id] = 0;
+        });
+
+        // Initialize upgrades
+        upgradesConfig.forEach(u => {
+            gameState.upgrades[u.id] = 0;
+        });
+
+        // Get current level config
+        function getCurrentLevelConfig() {
+            return levelConfigs[gameState.level - 1];
+        }
+
+        // Format large numbers
+        function formatNumber(num) {
+            if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
+            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+            if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+            return Math.floor(num).toString();
+        }
+
+        // Calculate upgrade cost
+        function getUpgradeCost(upgradeId) {
+            const upgrade = upgradesConfig.find(u => u.id === upgradeId);
+            const level = gameState.upgrades[upgradeId] || 0;
+            return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, level));
+        }
+
+        // Calculate worker cost
+        function getWorkerCost(workerId) {
+            const worker = workersConfig.find(w => w.id === workerId);
+            const count = gameState.workers[workerId] || 0;
+            // Increase cost based on level difficulty
+            const levelMultiplier = 1 + (gameState.level * 0.1);
+            return Math.floor(worker.baseCost * Math.pow(worker.costMultiplier, count) * levelMultiplier);
+        }
+
+        // Main click action
+        function scavenge(event) {
+            const levelConfig = getCurrentLevelConfig();
+            const toolsBonus = upgradesConfig.find(u => u.id === 'better_tools').effect();
+            const scoutBonus = upgradesConfig.find(u => u.id === 'scout_team').effect();
+            const advancedBonus = upgradesConfig.find(u => u.id === 'advanced_scavenging').effect();
+            
+            gameState.totalClicks++;
+            
+            // Base resources from click
+            let baseAmount = 1;
+            let resources = {
+                food: Math.floor(baseAmount * toolsBonus * scoutBonus),
+                supplies: Math.floor(baseAmount * toolsBonus * scoutBonus * 0.8),
+                weapons: Math.floor(baseAmount * toolsBonus * scoutBonus * 0.5),
+                survivors: Math.floor(advancedBonus * 0.3)
+            };
+
+            // Add resources
+            gameState.food += resources.food;
+            gameState.supplies += resources.supplies;
+            gameState.weapons += resources.weapons;
+            gameState.survivors += resources.survivors;
+            gameState.totalSurvivorsRescued += resources.survivors;
+
+            // Create floating text
+            if (event) {
+                showFloatingText(event, `+${resources.food}🍖 +${resources.supplies}📦 +${resources.weapons}🔫`);
+            }
+
+            // Random zombie attack
+            if (Math.random() < levelConfig.zombieAttackChance) {
+                triggerZombieAttack();
+            }
+
+            updateUI();
+            checkLevelComplete();
+        }
+
+        // Show floating text
+        function showFloatingText(event, text) {
+            const btn = document.getElementById('scavengeBtn');
+            const rect = btn.getBoundingClientRect();
+            const floating = document.createElement('div');
+            floating.className = 'floating-text';
+            floating.textContent = text;
+            floating.style.left = (event.clientX - 50) + 'px';
+            floating.style.top = (event.clientY - 20) + 'px';
+            document.body.appendChild(floating);
+            
+            setTimeout(() => floating.remove(), 1000);
+        }
+
+        // Trigger zombie attack
+        function triggerZombieAttack() {
+            const loss = Math.floor(gameState.survivors * 0.1);
+            if (loss > 0 && gameState.weapons > 0) {
+                const defended = Math.min(loss, Math.floor(gameState.weapons * 0.5));
+                gameState.survivors -= (loss - defended);
+                gameState.weapons = Math.max(0, gameState.weapons - Math.floor(defended * 0.3));
+                showNotification(`⚠️ ¡Ataque Zombie! Perdidos ${loss - defended} supervivientes`);
+            } else if (loss > 0) {
+                gameState.survivors -= loss;
+                showNotification(`⚠️ ¡Ataque Zombie! Perdidos ${loss} supervivientes (sin armas)`);
+            }
+        }
+
+        // Buy upgrade
+        function buyUpgrade(upgradeId) {
+            const cost = getUpgradeCost(upgradeId);
+            const currency = getUpgradeCurrency(upgradeId);
+            
+            if (gameState[currency] >= cost) {
+                gameState[currency] -= cost;
+                gameState.upgrades[upgradeId] = (gameState.upgrades[upgradeId] || 0) + 1;
+                showNotification(`✅ Mejora comprada: ${upgradesConfig.find(u => u.id === upgradeId).name}`);
+                updateUI();
+            }
+        }
+
+        // Get currency for upgrade
+        function getUpgradeCurrency(upgradeId) {
+            const currencies = ['food', 'supplies', 'weapons', 'food', 'supplies'];
+            const index = upgradesConfig.findIndex(u => u.id === upgradeId);
+            return currencies[index] || 'food';
+        }
+
+        // Buy worker
+        function buyWorker(workerId) {
+            const cost = getWorkerCost(workerId);
+            const worker = workersConfig.find(w => w.id === workerId);
+            
+            // Check if player can afford
+            if (gameState.food >= cost * 0.4 && gameState.supplies >= cost * 0.4 && gameState.weapons >= cost * 0.2) {
+                gameState.food -= Math.floor(cost * 0.4);
+                gameState.supplies -= Math.floor(cost * 0.4);
+                gameState.weapons -= Math.floor(cost * 0.2);
+                gameState.workers[workerId]++;
+                
+                // Start production loop for this worker
+                startWorkerProduction(worker);
+                
+                showNotification(`✅ Trabajador reclutado: ${worker.name}`);
+                updateUI();
+            } else {
+                showNotification(`❌ Recursos insuficientes`);
+            }
+        }
+
+        // Worker production
+        function startWorkerProduction(worker) {
+            // This is handled in the main game loop now
+        }
+
+        // Calculate production rates
+        function calculateProductionRates() {
+            const efficiencyBonus = upgradesConfig.find(u => u.id === 'efficient_workers').effect();
+            const masterBonus = upgradesConfig.find(u => u.id === 'master_trainer').effect();
+            const totalBonus = efficiencyBonus * masterBonus;
+            
+            let rates = { food: 0, supplies: 0, weapons: 0, survivors: 0 };
+            
+            workersConfig.forEach(worker => {
+                const count = gameState.workers[worker.id] || 0;
+                if (count > 0) {
+                    Object.keys(worker.production).forEach(resource => {
+                        const perSecond = (worker.production[resource] * count * totalBonus * 1000) / worker.interval;
+                        rates[resource] += perSecond;
+                    });
+                }
+            });
+            
+            return rates;
+        }
+
+        // Check if level is complete
+        function checkLevelComplete() {
+            const levelConfig = getCurrentLevelConfig();
+            const progress = (gameState.survivors / levelConfig.goal) * 100;
+            
+            document.getElementById('levelProgress').style.width = Math.min(progress, 100) + '%';
+            
+            if (gameState.survivors >= levelConfig.goal) {
+                if (gameState.level < 50) {
+                    document.getElementById('completedLevel').textContent = gameState.level;
+                    document.getElementById('levelCompleteModal').style.display = 'block';
+                } else {
+                    document.getElementById('gameCompleteModal').style.display = 'block';
+                    showFinalStats();
+                }
+            }
+        }
+
+        // Show final stats
+        function showFinalStats() {
+            const timePlayed = Math.floor((Date.now() - gameState.startTime) / 1000);
+            const hours = Math.floor(timePlayed / 3600);
+            const minutes = Math.floor((timePlayed % 3600) / 60);
+            const seconds = timePlayed % 60;
+            
+            document.getElementById('finalStats').innerHTML = `
+                Tiempo Total: ${hours}h ${minutes}m ${seconds}s<br>
+                Clicks Totales: ${formatNumber(gameState.totalClicks)}<br>
+                Supervivientes Rescatados: ${formatNumber(gameState.totalSurvivorsRescued)}
+            `;
+        }
+
+        // Next level
+        function nextLevel() {
+            gameState.level++;
+            gameState.levelsCompleted++;
+            gameState.survivors = 0; // Reset survivors for new level
+            
+            // Bonus for completing level
+            gameState.food += 100 * gameState.level;
+            gameState.supplies += 100 * gameState.level;
+            gameState.weapons += 50 * gameState.level;
+            
+            document.getElementById('levelCompleteModal').style.display = 'none';
+            
+            showNotification(`🎯 Nivel ${gameState.level} iniciado - ¡Más difícil!`);
+            updateUI();
+        }
+
+        // Show notification
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.remove(), 3000);
+        }
+
+        // Update UI
+        function updateUI() {
+            const levelConfig = getCurrentLevelConfig();
+            
+            // Resources
+            document.getElementById('survivors').textContent = formatNumber(gameState.survivors);
+            document.getElementById('food').textContent = formatNumber(gameState.food);
+            document.getElementById('supplies').textContent = formatNumber(gameState.supplies);
+            document.getElementById('weapons').textContent = formatNumber(gameState.weapons);
+            
+            // Level info
+            document.getElementById('currentLevel').textContent = gameState.level;
+            document.getElementById('levelGoal').textContent = formatNumber(levelConfig.goal);
+            
+            // Stats
+            document.getElementById('totalClicks').textContent = formatNumber(gameState.totalClicks);
+            document.getElementById('levelsCompleted').textContent = gameState.levelsCompleted;
+            document.getElementById('totalSurvivors').textContent = formatNumber(gameState.totalSurvivorsRescued);
+            
+            // Time played
+            const timePlayed = Math.floor((Date.now() - gameState.startTime) / 1000);
+            const minutes = Math.floor(timePlayed / 60);
+            const seconds = timePlayed % 60;
+            document.getElementById('timePlayed').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Production rates
+            const rates = calculateProductionRates();
+            document.getElementById('productionRates').innerHTML = `
+                🍖 ${rates.food.toFixed(1)}/s | 
+                📦 ${rates.supplies.toFixed(1)}/s | 
+                🔫 ${rates.weapons.toFixed(1)}/s | 
+                👥 ${rates.survivors.toFixed(1)}/s
+            `;
+            
+            // Update upgrades list
+            updateUpgradesList();
+            
+            // Update workers list
+            updateWorkersList();
+        }
+
+        // Update upgrades list
+        function updateUpgradesList() {
+            const container = document.getElementById('upgradesList');
+            container.innerHTML = '';
+            
+            upgradesConfig.forEach(upgrade => {
+                const cost = getUpgradeCost(upgrade.id);
+                const currency = getUpgradeCurrency(upgrade.id);
+                const level = gameState.upgrades[upgrade.id] || 0;
+                const canAfford = gameState[currency] >= cost;
+                
+                const item = document.createElement('div');
+                item.className = 'upgrade-item';
+                item.innerHTML = `
+                    <div class="upgrade-info">
+                        <div class="upgrade-name">${upgrade.name} (Nvl ${level})</div>
+                        <div class="upgrade-desc">${upgrade.description}</div>
+                    </div>
+                    <div class="upgrade-cost">${formatNumber(cost)} ${currency === 'food' ? '🍖' : currency === 'supplies' ? '📦' : '🔫'}</div>
+                    <button class="upgrade-btn" onclick="buyUpgrade('${upgrade.id}')" ${!canAfford ? 'disabled' : ''}>
+                        Comprar
+                    </button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Update workers list
+        function updateWorkersList() {
+            const container = document.getElementById('workersList');
+            container.innerHTML = '';
+            
+            workersConfig.forEach(worker => {
+                const cost = getWorkerCost(worker.id);
+                const count = gameState.workers[worker.id] || 0;
+                
+                // Check if can afford (need 40% food, 40% supplies, 20% weapons)
+                const canAfford = gameState.food >= cost * 0.4 && 
+                                 gameState.supplies >= cost * 0.4 && 
+                                 gameState.weapons >= cost * 0.2;
+                
+                const productionText = Object.entries(worker.production)
+                    .map(([res, amt]) => {
+                        const icon = res === 'food' ? '🍖' : res === 'supplies' ? '📦' : res === 'weapons' ? '🔫' : '👥';
+                        return `${amt}${icon}`;
+                    }).join(' ');
+                
+                const item = document.createElement('div');
+                item.className = 'worker-item';
+                item.innerHTML = `
+                    <div class="worker-info">
+                        <div class="worker-name">${worker.name}</div>
+                        <div class="worker-count">Cantidad: ${count}</div>
+                        <div class="worker-production">Produce: ${productionText} cada ${(worker.interval/1000).toFixed(1)}s</div>
+                    </div>
+                    <button class="upgrade-btn" onclick="buyWorker('${worker.id}')" ${!canAfford ? 'disabled' : ''}>
+                        ${formatNumber(cost)}
+                    </button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Auto-production loop
+        setInterval(() => {
+            const efficiencyBonus = upgradesConfig.find(u => u.id === 'efficient_workers').effect();
+            const masterBonus = upgradesConfig.find(u => u.id === 'master_trainer').effect();
+            const totalBonus = efficiencyBonus * masterBonus;
+            
+            workersConfig.forEach(worker => {
+                const count = gameState.workers[worker.id] || 0;
+                if (count > 0) {
+                    Object.keys(worker.production).forEach(resource => {
+                        const amount = (worker.production[resource] * count * totalBonus) / (worker.interval / 1000);
+                        gameState[resource] += amount;
+                        if (resource === 'survivors') {
+                            gameState.totalSurvivorsRescued += amount;
+                        }
+                    });
+                }
+            });
+            
+            // Apply resource decay on higher levels
+            const levelConfig = getCurrentLevelConfig();
+            if (levelConfig.resourceDecay > 0) {
+                gameState.food = Math.max(0, gameState.food * (1 - levelConfig.resourceDecay));
+                gameState.supplies = Math.max(0, gameState.supplies * (1 - levelConfig.resourceDecay));
+            }
+            
+            updateUI();
+            checkLevelComplete();
+        }, 1000);
+
+        // Save game
+        function saveGame() {
+            localStorage.setItem('zombieOutpostSave', JSON.stringify(gameState));
+        }
+
+        // Load game
+        function loadGame() {
+            const saved = localStorage.getItem('zombieOutpostSave');
+            if (saved) {
+                const loaded = JSON.parse(saved);
+                gameState = { ...gameState, ...loaded };
+            }
+        }
+
+        // Auto-save every 30 seconds
+        setInterval(saveGame, 30000);
+
+        // Initialize game
+        loadGame();
+        updateUI();
+
+        console.log('🧟 Zombie Outpost - Juego Cargado 🧟');
+        console.log('50 niveles extremos te esperan...');
+    </script>
+</body>
+</html>
